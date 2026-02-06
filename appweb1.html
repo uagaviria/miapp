@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>CONSOLA REACTOR - COMPLETA</title>
   <style>
     :root {
@@ -14,11 +14,15 @@
       --crt-bg: #0d1a0d; 
     }
 
+    * { box-sizing: border-box; } /* Crucial para tablets */
+
     body {
       background-color: var(--bg-color);
       color: var(--primary-color);
       font-family: 'Courier New', Courier, monospace;
       margin: 0;
+      padding: 0;
+      width: 100vw;
       height: 100vh;
       display: flex;
       justify-content: center;
@@ -33,176 +37,100 @@
         display: flex; flex-direction: column; justify-content: center; align-items: center;
         cursor: pointer;
     }
+
     .boot-text { 
         font-size: 1.5rem; color: var(--primary-color); 
         border: 2px solid var(--primary-color); padding: 20px;
         animation: blink 1s infinite;
     }
 
+    /* CAPA DE INTERFAZ DE CÁMARA (VFX) */
     #camera-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         z-index: 5000; pointer-events: none;
         background: radial-gradient(circle, rgba(0,0,0,0) 55%, rgba(0,0,0,0.8) 90%, black 100%);
-        box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
-        overflow: hidden;
-    }
-    #camera-overlay::before {
-        content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 4px);
-        opacity: 0.35;
     }
     
-    .cam-ui-rec { position: absolute; top: 40px; right: 50px; color: #ff0000; font-weight: bold; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 5px red; font-family: Arial, sans-serif; }
-    .cam-dot { width: 20px; height: 20px; background: red; border-radius: 50%; animation: blinkRec 1s infinite; }
-    .cam-ui-time { position: absolute; bottom: 40px; right: 50px; color: #fff; font-size: 1.5rem; opacity: 0.9; text-shadow: 2px 2px 0 #000; font-family: monospace; }
-    .cam-ui-battery { position: absolute; top: 40px; left: 50px; color: #fff; font-size: 1.2rem; border: 2px solid #fff; padding: 2px 10px; border-radius: 4px; display: flex; align-items: center; gap: 5px; }
-    .cam-ui-battery::after { content: ""; width: 5px; height: 10px; background: #fff; position: absolute; right: -9px; top: 5px; }
-    .cam-label { position: absolute; bottom: 40px; left: 50px; color: #fff; font-size: 1.2rem; opacity: 0.7; }
-    @keyframes blinkRec { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+    .cam-ui-rec { position: absolute; top: 20px; right: 30px; color: #ff0000; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 5px red; }
+    .cam-dot { width: 15px; height: 15px; background: red; border-radius: 50%; animation: blink 1s infinite; }
+    .cam-ui-time { position: absolute; bottom: 20px; right: 30px; color: #fff; font-size: 1.2rem; opacity: 0.8; font-family: monospace; }
+    .cam-ui-battery { position: absolute; top: 20px; left: 30px; color: #fff; font-size: 1rem; border: 1px solid #fff; padding: 2px 8px; border-radius: 3px; }
 
-    #security-alert {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(100, 0, 0, 0.9); z-index: 9999;
-        display: none; align-items: center; justify-content: center;
-    }
-    .alert-box { border: 5px solid red; padding: 30px; font-size: 3rem; color: red; background: #000; transform: rotate(-10deg); font-weight: bold; }
-
+    /* ESTRUCTURA PRINCIPAL AJUSTADA */
     #main-console-chassis {
         background: var(--panel-metal);
         border: 4px solid #444;
-        border-top-color: #666; border-left-color: #666; border-right-color: #111; border-bottom-color: #111;
-        padding: 20px;
-        box-shadow: 0 20px 50px rgba(0,0,0,1);
         display: grid;
-        grid-template-columns: 350px 1fr 210px;
+        grid-template-columns: 280px 1fr 200px;
         grid-template-rows: auto 1fr auto;
-        gap: 20px;
-        max-width: 1400px; width: 98%; height: 95vh;
+        gap: 15px;
+        width: 100vw; height: 100vh;
+        padding: 15px;
         position: relative;
     }
-    .screw { position: absolute; width: 15px; height: 15px; background: #111; border-radius: 50%; box-shadow: inset 1px 1px 2px #555; z-index: 5;}
-    .screw::after { content: ""; position: absolute; top: 50%; left: 2px; right: 2px; height: 2px; background: #333; transform: translateY(-50%) rotate(45deg); }
-    .tl { top: 8px; left: 8px; } .tr { top: 8px; right: 8px; } .bl { bottom: 8px; left: 8px; } .br { bottom: 8px; right: 8px; }
 
-    .side-panel { background: #181818; border: 2px inset #000; padding: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 0 20px #000; justify-content: space-between; }
-    .panel-group { display: flex; flex-direction: column; gap: 5px; }
-    .panel-title { font-size: 0.7rem; color: #888; border-bottom: 1px solid #444; margin-bottom: 5px; text-transform: uppercase;}
+    .side-panel { 
+        background: #181818; 
+        border: 2px inset #000; 
+        padding: 10px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 8px; 
+        box-shadow: inset 0 0 20px #000;
+        overflow: hidden;
+    }
 
+    .panel-title { font-size: 0.65rem; color: #888; border-bottom: 1px solid #444; padding-bottom: 3px; text-transform: uppercase;}
+
+    /* MONITORES Y METROS */
     .cctv-monitor {
-        height: 300px; background: #000; border: 2px solid #333; position: relative; overflow: hidden; box-shadow: inset 0 0 10px #000; pointer-events: none; user-select: none;
+        height: 180px; background: #000; border: 2px solid #333; position: relative; overflow: hidden;
     }
-    .cctv-video {
-        width: 100%; height: 100%; object-fit: cover; filter: sepia(100%) hue-rotate(90deg) contrast(1.2) brightness(0.8) blur(0.5px); opacity: 0.8;
-    }
-    .cctv-overlay {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, transparent 1px, transparent 3px); pointer-events: none;
-    }
-    .cctv-tag {
-        position: absolute; top: 5px; left: 5px; font-size: 0.5rem; color: #39ff14; background: rgba(0,0,0,0.5); padding: 2px; font-family: Arial, sans-serif;
-    }
-    .cctv-noise {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAA5OTkAAABMTExERERmZmYzMzNmZmZ34+VkAAAACHRSTlMAMwA3M2YzM3OqTo8AAAAJcEhZcwAADsQAAA7EAZUrDhsAAABYSURBVDjL7c6xDcAgDETRz0L2X6E0GvkKlSvhmYAgD1KV2MX5272718185lYyM0+Z+Z2Zz8x8ZeY7M9+Z+cnMX2Z+MvOdmd/M/GbmNzO/mfm/mf//M/8D8wPrOl+1QOti1gAAAABJRU5ErkJggg=='); opacity: 0.15; animation: staticNoise 0.5s steps(5) infinite; pointer-events: none;
-    }
-    @keyframes staticNoise { 0% { background-position: 0 0; } 100% { background-position: 100px 100px; } }
+    .cctv-video { width: 100%; height: 100%; object-fit: cover; filter: sepia(100%) hue-rotate(90deg) brightness(0.8); opacity: 0.7; }
 
     .analog-meter {
-        background: #e0e0e0; border: 4px solid #111; border-radius: 5px; height: 85px; position: relative; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        background: #e0e0e0; border: 3px solid #111; border-radius: 3px; height: 70px; position: relative; overflow: hidden;
     }
-    .meter-face { width: 100%; height: 100%; background: repeating-linear-gradient(90deg, transparent 0, transparent 9px, #333 10px); position: relative; }
-    .meter-face::before { content: ""; position: absolute; bottom: -20px; left: 10%; width: 80%; height: 80%; border-top: 2px solid #555; border-radius: 50% 50% 0 0; }
-    .meter-nums { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; }
-    .m-num { position: absolute; font-size: 0.65rem; color: #000; font-weight: bold; font-family: Arial, sans-serif;}
-    .n-left { bottom: 25px; left: 15px; } .n-mid { top: 35px; left: 50%; transform: translateX(-50%); } .n-right { bottom: 25px; right: 15px; }
-    .meter-label { position: absolute; bottom: 5px; left: 0; width: 100%; text-align: center; color: #000; font-weight: bold; font-size: 0.8rem; font-family: Arial, sans-serif; z-index: 3;}
+    .meter-label { position: absolute; bottom: 2px; width: 100%; text-align: center; color: #000; font-weight: bold; font-size: 0.7rem; font-family: Arial; }
     .meter-needle {
-        position: absolute; bottom: -5px; left: 50%; width: 3px; height: 85%; background: #cc0000; transform-origin: bottom center; transform: rotate(-45deg); box-shadow: 2px 2px 3px rgba(0,0,0,0.4); z-index: 2;
+        position: absolute; bottom: -5px; left: 50%; width: 2px; height: 80%; background: #cc0000; transform-origin: bottom center; transform: rotate(-45deg); transition: transform 0.5s;
     }
-    .meter-needle::after { content: ""; position: absolute; bottom: 0; left: -4px; width: 12px; height: 12px; background: #222; border-radius: 50%; }
 
-    .needle-volt { animation: voltMove 4s infinite alternate ease-in-out; }
-    .needle-amp { animation: ampMove 0.5s infinite alternate ease-in-out; }
-    .needle-hum { background: #00ffff !important; animation: humMove 8s infinite ease-in-out alternate; z-index: 2; }
-    .needle-hum::after { background: #004444 !important; }
-
-    @keyframes voltMove { 0% { transform: rotate(-10deg); } 100% { transform: rotate(15deg); } }
-    @keyframes ampMove { 0% { transform: rotate(-5deg); } 100% { transform: rotate(5deg); } }
-    @keyframes humMove { 0% { transform: rotate(-25deg); } 30% { transform: rotate(5deg); } 60% { transform: rotate(-10deg); } 100% { transform: rotate(20deg); } }
-
-    .round-meter { width: 100%; padding-top: 100%; position: relative; background: #e0e0e0; border-radius: 50%; border: 6px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.6); }
-    .round-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle, #fff 50%, #bbb 100%); }
-    .meter-ticks { position: absolute; top: 5%; left: 5%; width: 90%; height: 90%; border-radius: 50%; background: conic-gradient(from 225deg, transparent 0deg, transparent 2deg, #000 2deg, #000 3deg, transparent 3deg); background-size: 100% 100%; }
-    .meter-zone-danger { position: absolute; top: 10%; left: 10%; width: 80%; height: 80%; border-radius: 50%; border: 5px solid transparent; border-right-color: #ff0000; transform: rotate(45deg); opacity: 0.5; }
-    .r-num { position: absolute; font-size: 0.6rem; font-weight: bold; color: #000; font-family: Arial, sans-serif; }
-    .rn-0 { bottom: 25%; left: 25%; } .rn-1 { top: 35%; left: 18%; } .rn-2 { top: 15%; left: 50%; transform: translateX(-50%); } .rn-3 { top: 35%; right: 18%; } .rn-4 { bottom: 25%; right: 25%; color: red; }
-    .round-needle { position: absolute; top: 15%; left: 49%; width: 3px; height: 35%; background: #000; transform-origin: bottom center; transform: rotate(-135deg); z-index: 10; animation: steamMove 6s infinite ease-in-out; }
-    .round-needle::after { content:""; position: absolute; bottom:-5px; left:-3px; width:10px; height:10px; background:#000; border-radius:50%;}
-    @keyframes steamMove { 0% { transform: rotate(-100deg); } 50% { transform: rotate(0deg); } 60% { transform: rotate(-20deg); } 100% { transform: rotate(80deg); } }
-
-    .crt-monitor-bezel { grid-column: 2; grid-row: 2; background: #222; border-radius: 20px; padding: 20px; box-shadow: inset 0 0 30px #000; border: 4px solid #111; position: relative; overflow: hidden; }
-    .crt-monitor-bezel::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 60%); pointer-events: none; z-index: 10; border-radius: 20px; }
+    /* CONTENEDOR CENTRAL CRT */
+    .crt-monitor-bezel { 
+        grid-column: 2; grid-row: 2; 
+        background: #222; border-radius: 15px; padding: 15px; 
+        box-shadow: inset 0 0 30px #000; border: 3px solid #111; 
+        position: relative;
+    }
     
-    .container { background: var(--crt-bg); padding: 20px; border: 2px solid var(--primary-color); box-shadow: 0 0 20px rgba(57, 255, 20, 0.2), inset 0 0 50px rgba(0,0,0,0.8); height: 94%; display: flex; flex-direction: column; justify-content: space-between; border-radius: 40px / 20px; overflow: hidden; position: relative; z-index: 2; }
-    .crt-top-vitals { display: flex; justify-content: space-around; border-bottom: 2px dotted var(--primary-color); padding-bottom: 10px; margin-bottom: 10px; font-size: 0.9rem; }
-    .vital-block { text-align: center; } .vital-value { font-size: 1.4rem; font-weight: bold; }
-    .fluctuate-text { animation: textFlicker 0.2s infinite alternate; }
+    .container { 
+        background: var(--crt-bg); 
+        padding: 15px; 
+        border: 2px solid var(--primary-color); 
+        height: 100%; 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: space-between; 
+        border-radius: 10px;
+        position: relative;
+    }
 
-    .geiger-graph-container { height: 50px; background: rgba(0, 50, 0, 0.3); border: 1px solid var(--primary-color); margin-top: 5px; display: flex; align-items: flex-end; gap: 3px; overflow: hidden; padding: 2px; }
-    .geiger-bar { flex: 1; background: var(--primary-color); opacity: 0.7; transition: height 0.1s ease; }
-    .critical-rad { background: var(--danger-color) !important; box-shadow: 0 0 8px var(--danger-color); }
+    .crt-top-vitals { display: flex; justify-content: space-around; border-bottom: 1px dotted var(--primary-color); padding-bottom: 5px; }
+    .vital-value { font-size: 1.2rem; font-weight: bold; }
 
-    h1 { border-bottom: 1px dashed var(--primary-color); padding-bottom: 5px; margin: 10px 0; font-size: 1.6rem; text-shadow: 0 0 8px var(--primary-color); text-align: center; }
-    .status-bar { display: flex; justify-content: space-between; font-size: 0.8rem; opacity: 0.8; }
-    .question-box { margin: 10px 0; font-size: 1.3rem; line-height: 1.4; text-align: center; color: #fff;}
-    input[type="text"] { background: rgba(0,20,0,0.5); border: 1px solid var(--primary-color); color: var(--primary-color); font-family: inherit; font-size: 1.8rem; text-align: center; width: 100%; padding: 10px 0; outline: none; text-transform: uppercase; box-shadow: inset 0 0 10px rgba(0,255,0,0.2); }
-    
-    #lock-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(200, 0, 0, 0.95); color: #fff; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
-    #lock-screen h1 { font-size: 3rem; margin: 0; animation: blink 0.3s infinite; color: yellow; text-shadow: 3px 3px 0 #000;}
-    #timer { font-size: 9rem; font-weight: bold; margin: 20px 0; font-variant-numeric: tabular-nums;}
-    
-    .console-header { grid-column: 1 / span 3; display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; background: #222; padding: 10px; border-radius: 5px;}
-    .console-footer { grid-column: 1 / span 3; border-top: 2px solid #000; padding-top: 10px; font-size: 0.9rem; color: #555; text-align: center; font-family: monospace; }
-    .warning-stripe { height: 20px; background: repeating-linear-gradient(45deg, #222, #222 10px, #ffb300 10px, #ffb300 20px); flex-grow: 1; margin: 0 20px; border: 1px solid #000; }
+    /* TECLADO VIRTUAL */
+    #virtual-keyboard { display: flex; flex-direction: column; gap: 4px; margin-top: 5px; }
+    .kb-row { display: flex; gap: 4px; justify-content: center; }
+    .key-btn { flex: 1; background: rgba(0, 40, 0, 0.6); border: 1px solid var(--primary-color); color: var(--primary-color); font-size: 1rem; padding: 12px 0; cursor: pointer; }
+    .key-btn:active { background: var(--primary-color); color: #000; }
 
-    @keyframes textFlicker { 0% { opacity: 1; } 100% { opacity: 0.7; } }
+    .round-meter { width: 100%; aspect-ratio: 1/1; position: relative; background: #e0e0e0; border-radius: 50%; border: 4px solid #222; }
+    .round-needle { position: absolute; top: 15%; left: 49%; width: 2px; height: 35%; background: #000; transform-origin: bottom center; transform: rotate(-100deg); }
+
+    .console-footer { grid-column: 1 / span 3; color: #555; font-size: 0.7rem; text-align: center; padding-top: 5px; }
+
     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-    .shaking-chassis { animation: earthquakeHard 0.4s infinite; }
-    @keyframes earthquakeHard { 0% { transform: translate(2px, 2px); } 25% { transform: translate(-2px, -2px); } 50% { transform: translate(-2px, 2px); } 75% { transform: translate(2px, -2px); } 100% { transform: translate(0,0); } }
-    .input-error { border-color: var(--danger-color) !important; color: var(--danger-color) !important; animation: shakeInput 0.4s; }
-    @keyframes shakeInput { 0% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } 100% { transform: translateX(0); } }
-
-    #virtual-keyboard { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
-    .kb-row { display: flex; gap: 5px; justify-content: center; }
-    .key-btn { flex: 1; background: rgba(0, 20, 0, 0.5); border: 1px solid var(--primary-color); color: var(--primary-color); font-family: inherit; font-size: 1.1rem; padding: 12px 0; cursor: pointer; text-transform: uppercase; }
-    .key-btn:active { background: var(--primary-color); color: #000; box-shadow: 0 0 15px var(--primary-color); }
-    .key-wide { flex: 2; font-weight: bold; }
-
-    /* ESTILO DEL BOTÓN DE SALIDA */
-    .exit-btn {
-      grid-column: 3;
-      grid-row: 3;
-      background: #800000;
-      border: 3px solid #400000;
-      color: #fff;
-      font-weight: bold;
-      padding: 10px;
-      text-align: center;
-      text-decoration: none;
-      border-radius: 5px;
-      box-shadow: 0 4px 0 #200000;
-      transition: all 0.1s;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-size: 0.7rem;
-      cursor: pointer;
-    }
-    .exit-btn:active {
-      transform: translateY(4px);
-      box-shadow: 0 0 0 #200000;
-      background: #a00000;
-    }
-    .exit-btn span { font-size: 1.2rem; }
   </style>
 </head>
 <body id="main-body">
@@ -211,443 +139,145 @@
         <div class="boot-text">HAGA CLIC PARA INICIAR SISTEMA</div>
     </div>
 
-    <div id="security-alert">
-        <div class="alert-box">ACCESO DENEGADO REACTOR EN PELIGRO </div>
-    </div>
-
     <div id="camera-overlay">
         <div class="cam-ui-rec"><div class="cam-dot"></div> GRAB</div>
         <div class="cam-ui-battery">BAT. FULL</div>
         <div class="cam-ui-time" id="cam-time">00:00:00:00</div>
-        <div class="cam-label">CAM-04 [SALA DEL REACTOR]</div>
     </div>
 
     <div id="main-console-chassis">
-        <div class="screw tl"></div><div class="screw tr"></div><div class="screw bl"></div><div class="screw br"></div>
-
-        <div class="console-header">
-            <div style="font-weight: bold; font-size: 1.5rem; color: #aaa; display: flex; align-items: center; gap: 10px;">
-                <span style="color: yellow; font-size: 2rem;">☢️</span> UNIDAD-734
-            </div>
-            <div class="warning-stripe"></div>
-            <div style="color: #666; font-size: 0.8rem;">OP.SIS: ADMIN</div>
+        <div style="grid-column: 1 / span 3; display: flex; align-items: center; background: #222; padding: 5px 15px; border-radius: 5px;">
+            <span style="color: yellow; font-size: 1.5rem; margin-right: 10px;">☢️</span> 
+            <span style="font-weight: bold;">UNIDAD-734 / SISTEMA DE CONTROL DE CONTENCIÓN</span>
         </div>
 
         <div class="side-panel">
-            <div class="panel-group" style="flex-grow: 1;">
-                <div class="panel-title">VISUALIZACIÓN NÚCLEO</div>
-                <div class="cctv-monitor">
-                    <video autoplay loop muted playsinline disablePictureInPicture controlsList="nodownload nofullscreen noremoteplayback" class="cctv-video">
-                        <source src="Cherenkov Radiation.mp4" type="video/mp4">
-                    </video>
-                    <div class="cctv-noise"></div>
-                    <div class="cctv-overlay"></div>
-                    <div class="cctv-tag">CAM-04: REACTOR NUCLEAR</div>
-                </div>
+            <div class="panel-title">VIDEO NÚCLEO</div>
+            <div class="cctv-monitor">
+                <video id="reactor-video" loop muted playsinline class="cctv-video">
+                    <source src="Cherenkov Radiation.mp4" type="video/mp4">
+                </video>
             </div>
-            <div class="panel-group">
-                <div class="panel-title">HUMEDAD DEL REACTOR</div>
-                <div class="analog-meter">
-                    <div class="meter-face">
-                        <div class="meter-nums"><span class="m-num n-left">0</span><span class="m-num n-mid">100%</span><span class="m-num n-right">100%</span></div>
-                    </div>
-                    <div class="meter-needle needle-hum"></div>
-                    <div class="meter-label">HUMEDAD</div>
-                </div>
+            
+            <div class="panel-title">MÉTRICAS ANALÓGICAS</div>
+            <div class="analog-meter">
+                <div class="meter-needle" style="animation: voltMove 3s infinite alternate;"></div>
+                <div class="meter-label">VOLTAJE AC</div>
             </div>
-
-            <div class="panel-group">
-                <div class="panel-title">VOLTAJE DEL REACTOR</div>
-                <div class="analog-meter">
-                    <div class="meter-face">
-                        <div class="meter-nums"><span class="m-num n-left">0</span><span class="m-num n-mid">50</span><span class="m-num n-right">100</span></div>
-                    </div>
-                    <div class="meter-needle needle-volt"></div>
-                    <div class="meter-label">V. AC</div>
-                </div>
-            </div>
-
-            <div class="panel-group">
-                <div class="panel-title">CORRIENTE DE RED</div>
-                <div class="analog-meter">
-                    <div class="meter-face">
-                        <div class="meter-nums"><span class="m-num n-left">0</span><span class="m-num n-mid">50</span><span class="m-num n-right">100</span></div>
-                    </div>
-                    <div class="meter-needle needle-amp"></div>
-                    <div class="meter-label">AMPERIOS</div>
-                </div>
+            <div class="analog-meter">
+                <div class="meter-needle" style="animation: ampMove 0.8s infinite alternate;"></div>
+                <div class="meter-label">AMPERAJE</div>
             </div>
         </div>
 
         <div class="crt-monitor-bezel">
-            <div class="container" id="game-container">
+            <div class="container">
                 <div class="crt-top-vitals">
-                    <div class="vital-block"><div style="font-size:0.7rem; opacity:0.7;">VOLTAJE</div><div class="vital-value fluctuate-text">220.5V</div></div>
-                    <div class="vital-block" style="color:var(--secondary-color);"><div style="font-size:0.7rem; opacity:0.7;">TEMP</div><div class="vital-value fluctuate-text">450°C</div></div>
-                    <div class="vital-block" style="color:var(--danger-color);"><div style="font-size:0.7rem; opacity:0.7;">RADS</div><div class="vital-value fluctuate-text" id="rad-value">3.6R/h</div></div>
+                    <div class="vital-block"><span>TEMP</span><div class="vital-value" style="color:var(--secondary-color)">450°C</div></div>
+                    <div class="vital-block"><span>RADS</span><div class="vital-value" id="rad-value" style="color:var(--danger-color)">3.6 R/h</div></div>
                 </div>
 
-                <div class="status-bar"><span id="system-status">PROTOCOLO: ACTIVO</span><span id="level-indicator">PUNTO DE CONTROL 1/3</span></div>
+                <h1 style="font-size: 1.2rem; text-align: center; margin: 5px 0;">VERIFICACIÓN DE SEGURIDAD</h1>
+                <div id="question-text" style="text-align: center; font-size: 1rem; color: #fff; min-height: 40px;">Cargando protocolo...</div>
                 
-                <h1>VERIFICACIÓN REQUERIDA</h1>
-                
-                <div class="question-box" id="question-text">Inicializando...</div>
-                
-                <input type="text" id="answer-input" placeholder="INGRESAR DATOS" autocomplete="off" readonly>
-                
+                <input type="text" id="answer-input" style="width:100%; background:black; color:var(--primary-color); border:1px solid var(--primary-color); font-size: 1.5rem; text-align: center; padding: 5px;" readonly>
+
                 <div id="virtual-keyboard">
                     <div class="kb-row">
-                        <button class="key-btn" onclick="pressKey('1')">1</button><button class="key-btn" onclick="pressKey('2')">2</button>
-                        <button class="key-btn" onclick="pressKey('3')">3</button><button class="key-btn" onclick="pressKey('4')">4</button>
-                        <button class="key-btn" onclick="pressKey('5')">5</button><button class="key-btn" onclick="pressKey('6')">6</button>
-                        <button class="key-btn" onclick="pressKey('7')">7</button><button class="key-btn" onclick="pressKey('8')">8</button>
-                        <button class="key-btn" onclick="pressKey('9')">9</button><button class="key-btn" onclick="pressKey('0')">0</button>
+                        <button class="key-btn" onclick="pressKey('1')">1</button>
+                        <button class="key-btn" onclick="pressKey('2')">2</button>
+                        <button class="key-btn" onclick="pressKey('3')">3</button>
+                        <button class="key-btn" onclick="pressKey('A')">A</button>
+                        <button class="key-btn" onclick="pressKey('B')">B</button>
                     </div>
                     <div class="kb-row">
-                        <button class="key-btn" onclick="pressKey('A')">A</button><button class="key-btn" onclick="pressKey('B')">B</button>
-                        <button class="key-btn" onclick="pressKey('E')">E</button><button class="key-btn" onclick="pressKey('I')">I</button>
-                        <button class="key-btn" onclick="pressKey('O')">O</button><button class="key-btn" onclick="pressKey('U')">U</button>
-                        <button class="key-btn" onclick="pressKey('V')">V</button><button class="key-btn" onclick="pressKey('-')">-</button>
-                    </div>
-                    <div class="kb-row">
-                        <button class="key-btn key-wide" style="color:var(--danger-color); border-color:var(--danger-color);" onclick="pressKey('DEL')">BORRAR</button>
-                        <button class="key-btn key-wide" onclick="pressKey('ENTER')">TRANSMITIR</button>
+                        <button class="key-btn" style="color:red" onclick="pressKey('DEL')">BORRAR</button>
+                        <button class="key-btn" style="flex: 2; font-weight: bold;" onclick="pressKey('ENTER')">TRANSMITIR</button>
                     </div>
                 </div>
-
-                <div style="margin-top: 10px;">
-                    <div style="font-size: 0.7rem;">> HISTORIAL RADIACIÓN</div>
-                    <div class="geiger-graph-container" id="geiger-container">
-                        </div>
-                </div>
-            </div>
-            
-            <div id="lock-screen">
-                <span style="font-size: 5rem;">⚠️</span>
-                <h1>ERROR CRÍTICO</h1>
-                <p>FALLO EN CONTENCIÓN</p>
-                <div id="timer">20</div>
-                <p>PURGANDO SISTEMA...</p>
             </div>
         </div>
 
         <div class="side-panel">
-            <div class="panel-group">
-                <div class="panel-title">TEMP. NÚCLEO</div>
-                <div style="height: 20px; background: #333; border: 1px solid #555;"><div style="width: 70%; height: 100%; background: linear-gradient(90deg, lime, yellow, red); animation: widthPulse 4s infinite;"></div></div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.6rem; color: #aaa; margin-top: 2px;"><span>0</span><span>CRIT</span></div>
+            <div class="panel-title">PRESIÓN VAPOR</div>
+            <div class="round-meter">
+                <div class="round-needle" style="animation: steamMove 5s infinite ease-in-out;"></div>
             </div>
-            <div class="panel-group">
-                <div class="panel-title">ESTADO DE NUCLEO</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #aaa;"><div style="width: 10px; height: 10px; background: lime; border-radius: 50%; box-shadow: 0 0 5px lime;"></div> ENE</div>
-                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #aaa;"><div style="width: 10px; height: 10px; background: lime; border-radius: 50%; animation: blinkRec 0.5s infinite;"></div> RED</div>
-                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #aaa;"><div id="alarm-led" style="width: 10px; height: 10px; background: #500; border-radius: 50%;"></div> ALRT</div>
-                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #aaa;"><div style="width: 10px; height: 10px; background: orange; border-radius: 50%;"></div> ESTABLE</div>
-                </div>
-            </div>
-            <div class="panel-group">
-                <div class="panel-title">TEMP. REACTOR</div>
-                <div style="height: 20px; background: #333; border: 1px solid #555;"><div style="width: 70%; height: 100%; background: linear-gradient(90deg, lime, yellow, red); animation: widthPulse 4s infinite;"></div></div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.6rem; color: #aaa; margin-top: 2px;"><span>0</span><span>CRIT</span></div>
-            </div>
-            <div class="panel-group">
-                <div class="panel-title">ESTADO DE SISTEMA</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #aaa;"><div style="width: 10px; height: 10px; background: lime; border-radius: 50%; box-shadow: 0 0 5px lime;"></div> ENE</div>
-                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #aaa;"><div style="width: 10px; height: 10px; background: lime; border-radius: 50%; animation: blinkRec 0.5s infinite;"></div> RED</div>
-                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #aaa;"><div id="alarm-led-2" style="width: 10px; height: 10px; background: #500; border-radius: 50%;"></div> ALRT</div>
-                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #aaa;"><div style="width: 10px; height: 10px; background: rgb(255, 60, 0); border-radius: 50%;"></div> SOBRECARGADO</div>
-                </div>
-            </div>
-            <div class="panel-group" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end;">
-                <div class="panel-title">PRESIÓN VAPOR</div>
-                <div class="round-meter">
-                    <div class="round-face">
-                        <div class="meter-ticks"></div><div class="meter-zone-danger"></div>
-                        <span class="r-num rn-0">0</span><span class="r-num rn-1">1000</span><span class="r-num rn-2">2500</span><span class="r-num rn-3">4000</span><span class="r-num rn-4">CRIT</span>
-                        <div style="position: absolute; top: 65%; width: 100%; text-align: center; color: #000; font-weight: bold; font-size: 0.8rem;">PSI</div>
-                        <div class="round-needle"></div>
-                    </div>
-                </div>
+            <div class="panel-title">INDICADORES LED</div>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 5px; font-size: 0.7rem;">
+                <div><span style="color:lime">●</span> NÚCLEO ONLINE</div>
+                <div><span style="color:orange">●</span> ENFRIAMIENTO ACTIVO</div>
+                <div><span id="alert-led" style="color:#400">●</span> ALERTA CRÍTICA</div>
             </div>
         </div>
 
-        <div class="console-footer">
-            > DIAGNÓSTICO EN CURSO... OK. SINC. CINTA MAGNÉTICA... OK. ESPERANDO ENTRADA_
-        </div>
-
-        <!-- <a href="#" class="exit-btn">
-          <span>🛑</span>
-          EMERGENCY EXIT
-        </a> -->
+        <div class="console-footer">> TERMINAL ACTIVA EN PUERTO COM1... ESPERANDO RESPUESTA_</div>
     </div>
 
     <script>
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let sirenOscillator = null;
-        let sirenGain = null;
-        let sirenLoop = null;
-        let isCritical = false;
+        const video = document.getElementById('reactor-video');
+        const uiInput = document.getElementById('answer-input');
+        const uiQuestion = document.getElementById('question-text');
+
+        const preguntas = [
+            { t: "Voltaje en caja amarilla", r: "220" },
+            { t: "Válvulas rojas visibles", r: "4" },
+            { t: "Código bajo extintor", r: "B7" }
+        ];
+        let pIndex = 0;
 
         function updateCameraTime() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('es-ES', { hour12: false }) + ":" + Math.floor(now.getMilliseconds() / 10).toString().padStart(2, '0');
-            document.getElementById('cam-time').innerText = timeString;
+            document.getElementById('cam-time').innerText = now.toLocaleTimeString('es-ES', { hour12: false });
             requestAnimationFrame(updateCameraTime);
         }
         updateCameraTime();
 
-        const geigerContainer = document.getElementById('geiger-container');
-        const totalBars = 20;
-        for(let i=0; i<totalBars; i++) {
-            const bar = document.createElement('div');
-            bar.className = 'geiger-bar';
-            geigerContainer.appendChild(bar);
-        }
-
-        function updateGeiger() {
-            const bars = document.querySelectorAll('.geiger-bar');
-            bars.forEach(bar => {
-                let h;
-                if(isCritical) {
-                    h = 80 + Math.random() * 20;
-                    bar.classList.add('critical-rad');
-                } else {
-                    h = 10 + Math.random() * 40;
-                    bar.classList.remove('critical-rad');
-                }
-                bar.style.height = h + '%';
-            });
-            
-            const radValue = document.getElementById('rad-value');
-            const currentRad = isCritical ? (500 + Math.random() * 100) : (3.6 + Math.random() * 0.5);
-            radValue.innerText = currentRad.toFixed(1) + "R/h";
-            
-            setTimeout(updateGeiger, 150);
-        }
-        updateGeiger();
-
         function iniciarSistema() {
-            let elem = document.documentElement;
-            if(elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
             if (audioCtx.state === 'suspended') audioCtx.resume();
             document.getElementById('boot-screen').style.display = 'none';
+            video.play();
             cargarPregunta();
         }
 
-        document.addEventListener('contextmenu', e => {
-            e.preventDefault();
-            playBeep(100, 'sawtooth');
-            const alert = document.getElementById('security-alert');
-            alert.style.display = 'flex';
-            setTimeout(() => alert.style.display = 'none', 3000);
-        });
-
-        const preguntas = [
-            { texto: "Identifique el voltaje nominal en la caja amarilla.", respuesta: "220V" },
-            { texto: "¿Cuántas válvulas rojas hay en la tubería?", respuesta: "4" },
-            { texto: "Código alfanumérico bajo el extintor.", respuesta: "B7-99" },
-            { texto: "Código del chaleco de seguridad", respuesta: "9899" }
-        ];
-        let nivelActual = 0;
-        const tiempoCastigo = 20; 
-        let countdownInterval = null;
-
-        const uiPregunta = document.getElementById('question-text');
-        const uiInput = document.getElementById('answer-input');
-        const uiNivel = document.getElementById('level-indicator');
-        const lockScreen = document.getElementById('lock-screen');
-        const timerDisplay = document.getElementById('timer');
-        const mainChassis = document.getElementById('main-console-chassis');
-        const alarmLed = document.getElementById('alarm-led');
-
-        function playBeep(freq = 400, type = 'square') {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
-        }
-
-        function playSuccessSound() {
-            const now = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(440, now);
-            osc.frequency.setValueAtTime(880, now + 0.1);
-            gain.gain.setValueAtTime(0.1, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.5);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(now + 0.5);
-        }
-
-        function startSiren() {
-            sirenOscillator = audioCtx.createOscillator();
-            sirenGain = audioCtx.createGain();
-            sirenOscillator.type = 'sawtooth';
-            sirenOscillator.connect(sirenGain);
-            sirenGain.connect(audioCtx.destination);
-            sirenGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            sirenOscillator.frequency.setValueAtTime(160, audioCtx.currentTime);
-            sirenOscillator.start();
-            
-            const runCycle = (startTime) => {
-                sirenOscillator.frequency.linearRampToValueAtTime(650, startTime + 3.0);
-                sirenOscillator.frequency.linearRampToValueAtTime(160, startTime + 7.0);
-            };
-            const now = audioCtx.currentTime;
-            runCycle(now);
-            sirenLoop = setInterval(() => {
-                const timeNow = audioCtx.currentTime;
-                sirenOscillator.frequency.cancelScheduledValues(timeNow);
-                sirenOscillator.frequency.setValueAtTime(160, timeNow);
-                runCycle(timeNow);
-            }, 7000);
-        }
-
-        function stopSiren() {
-            if (sirenOscillator) {
-                clearInterval(sirenLoop);
-                const now = audioCtx.currentTime;
-                sirenOscillator.frequency.cancelScheduledValues(now);
-                sirenGain.gain.cancelScheduledValues(now);
-                sirenOscillator.frequency.exponentialRampToValueAtTime(0.01, now + 2.0);
-                sirenGain.gain.linearRampToValueAtTime(0, now + 2.0);
-                setTimeout(() => { if(sirenOscillator) { sirenOscillator.stop(); sirenOscillator = null; } }, 2000);
-            }
-        }
-
         function cargarPregunta() {
-            if (nivelActual < preguntas.length) {
-                uiPregunta.innerText = preguntas[nivelActual].texto;
-                uiNivel.innerText = `PUNTO DE CONTROL ${nivelActual + 1}/${preguntas.length}`;
-                uiInput.value = '';
-                uiInput.classList.remove('input-error'); 
-            } else {
-                juegoTerminado();
-            }
+            uiQuestion.innerText = preguntas[pIndex].t;
+            uiInput.value = "";
         }
 
         function pressKey(key) {
-            playBeep(350 + Math.random() * 100, 'square');
-            if (key === 'DEL') {
-                uiInput.value = uiInput.value.slice(0, -1);
-            } else if (key === 'ENTER') {
-                if (uiInput.value.trim() !== "") verificarRespuesta();
+            playBeep();
+            if (key === 'DEL') uiInput.value = uiInput.value.slice(0, -1);
+            else if (key === 'ENTER') validar();
+            else uiInput.value += key;
+        }
+
+        function playBeep() {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.frequency.value = 600; g.gain.value = 0.1;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function validar() {
+            if (uiInput.value === preguntas[pIndex].r) {
+                pIndex = (pIndex + 1) % preguntas.length;
+                cargarPregunta();
             } else {
-                if (uiInput.value.length < 15) uiInput.value += key;
+                uiInput.classList.add('input-error');
+                setTimeout(() => uiInput.classList.remove('input-error'), 500);
             }
-        }
-
-        function verificarRespuesta() {
-            const inputUsuario = uiInput.value.toUpperCase().trim();
-            const respuestaCorrecta = preguntas[nivelActual].respuesta.toUpperCase();
-            
-            if (inputUsuario === respuestaCorrecta) {
-                playSuccessSound();
-                nivelActual++;
-                setTimeout(cargarPregunta, 500); 
-            } else {
-                uiInput.classList.add('input-error'); 
-                triggerAlarmSequence();
-            }
-        }
-
-        function triggerAlarmSequence() {
-            isCritical = true;
-            lockScreen.style.display = 'flex';
-            startSiren();
-            mainChassis.classList.add('shaking-chassis');
-            alarmLed.style.backgroundColor = "red";
-            alarmLed.style.boxShadow = "0 0 10px red";
-            
-            let tiempoRestante = tiempoCastigo;
-            timerDisplay.innerText = tiempoRestante;
-            countdownInterval = setInterval(() => {
-                tiempoRestante--;
-                timerDisplay.innerText = tiempoRestante;
-                if (tiempoRestante <= 0) endAlarmSequence();
-            }, 1000);
-        }
-
-        function endAlarmSequence() {
-            isCritical = false;
-            clearInterval(countdownInterval);
-            stopSiren();
-            lockScreen.style.display = 'none';
-            mainChassis.classList.remove('shaking-chassis');
-            alarmLed.style.backgroundColor = "#500"; 
-            alarmLed.style.boxShadow = "none";
-            uiInput.value = '';
-            uiInput.classList.remove('input-error');
-        }
-
-        function juegoTerminado() {
-            const playReactorSound = () => {
-                const osc1 = audioCtx.createOscillator();
-                const osc2 = audioCtx.createOscillator();
-                const mainGain = audioCtx.createGain();
-                const filter = audioCtx.createBiquadFilter();
-                
-                osc1.type = 'sine';
-                osc2.type = 'sawtooth';
-                osc1.frequency.setValueAtTime(55, audioCtx.currentTime); 
-                osc2.frequency.setValueAtTime(55.5, audioCtx.currentTime); 
-                
-                mainGain.gain.setValueAtTime(0, audioCtx.currentTime);
-                mainGain.gain.linearRampToValueAtTime(0.02, audioCtx.currentTime + 2); 
-
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(200, audioCtx.currentTime);
-
-                osc1.connect(filter);
-                osc2.connect(filter);
-                filter.connect(mainGain);
-                mainGain.connect(audioCtx.destination);
-                
-                osc1.start();
-                osc2.start();
-            };
-
-            playReactorSound(); 
-            playSuccessSound(); 
-
-            setTimeout(() => {
-                window.location.href = "login8.html";
-            }, 60000);
-
-            document.getElementById('game-container').innerHTML = `
-                <div style="background: rgba(0, 25, 0, 0.9); border: 2px solid var(--primary-color); padding: 25px; border-radius: 15px; box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.2); font-family: 'Courier New', Courier, monospace; margin-top: 40px; position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, rgba(0,255,0,0.03) 0px, rgba(0,255,0,0.03) 1px, transparent 2px); pointer-events: none;"></div>
-                    <h1 style="color:var(--primary-color); border:none; margin: 0; font-size: 2.2rem; text-shadow: 0 0 15px var(--primary-color); text-align:center; letter-spacing: 3px;">[ SISTEMA SEGURO ]</h1>
-                    <div style="height: 1px; background: var(--primary-color); margin: 20px 0; opacity: 0.4;"></div>
-                    <p style="text-align:center; color: #fff; font-size: 1rem; margin-bottom: 25px; opacity: 0.9;">NÚCLEO ESTABILIZADO - PROTOCOLOS ACTIVOS<br><span style="font-size: 0.8rem; color: var(--primary-color);">REDIRECCIÓN AUTOMÁTICA EN 60s</span></p>
-                    <div style="background: rgba(57, 255, 20, 0.1); border: 1px solid var(--primary-color); padding: 15px; text-align: center;">
-                        <p style="margin: 0; font-size: 0.9rem; color: #88ff88;">CÓDIGO DE EVACUACIÓN:</p>
-                        <p style="margin: 10px 0 0 0; font-size: 2.5rem; color: #fff; font-weight: bold; letter-spacing: 5px; animation: glow 1.5s infinite alternate;">1234#</p>
-                    </div>
-                    <div style="margin-top:25px; text-align:center;">
-                        <a href="login8.html" style="text-decoration: none; display: inline-block; transition: transform 0.3s ease;">
-                            <div class="unlock-btn" style="font-size: 4rem; filter: drop-shadow(0 0 8px var(--primary-color)); cursor: pointer; user-select: none;">🔓</div>
-                            <p style="color: var(--primary-color); font-size: 0.7rem; margin-top: 5px; opacity: 0.7;">[ CLIC PARA SALIR ]</p>
-                        </a>
-                    </div>
-                    <style>
-                        .unlock-btn:hover { transform: scale(1.2); filter: drop-shadow(0 0 15px var(--primary-color)) brightness(1.2); }
-                        @keyframes glow { from { text-shadow: 0 0 5px #fff, 0 0 10px var(--primary-color); } to { text-shadow: 0 0 10px #fff, 0 0 20px var(--primary-color); } }
-                    </style>
-                </div>
-            `;
         }
     </script>
+
+    <style>
+        /* Animaciones extra para los metros */
+        @keyframes voltMove { from { transform: rotate(-30deg); } to { transform: rotate(10deg); } }
+        @keyframes ampMove { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
+        @keyframes steamMove { 0% { transform: rotate(-100deg); } 50% { transform: rotate(20deg); } 100% { transform: rotate(-100deg); } }
+        .input-error { border-color: red !important; box-shadow: 0 0 10px red; }
+    </style>
 </body>
 </html>
